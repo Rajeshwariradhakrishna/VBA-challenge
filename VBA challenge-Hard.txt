@@ -1,0 +1,92 @@
+Sub stocks()
+    Dim tickername As String
+    Dim output_ticker_symbols As Integer
+    Dim open_price As Double
+    Dim close_price As Double
+    Dim volume As Double
+    Dim yearly_change As Double
+    Dim percent_change As Double
+    volume = 0
+    output_ticker_symbols = 2
+    ws_count = ActiveWorkbook.Worksheets.Count
+    
+    'For loop to loop through all the worksheets
+    For s = 1 To ws_count
+    
+        ActiveWorkbook.Worksheets(s).Cells(1, 9).Value = "Ticker"
+        ActiveWorkbook.Worksheets(s).Cells(1, 10).Value = "Yearly Change"
+        ActiveWorkbook.Worksheets(s).Cells(1, 11).Value = "Percent Change"
+        ActiveWorkbook.Worksheets(s).Cells(1, 12).Value = "Total Stock Volume"
+            
+        lastrow = ActiveWorkbook.Worksheets(s).Cells(Rows.Count, 1).End(xlUp).Row
+       'For loop to loop through all the by the ticker names
+        For i = 2 To lastrow
+            'If condition to search for the values when the next cell value is different than the current cell value
+            If ActiveWorkbook.Worksheets(s).Cells(i + 1, 1).Value <> ActiveWorkbook.Worksheets(s).Cells(i, 1).Value Then
+                    tickername = ActiveWorkbook.Worksheets(s).Cells(i, 1).Value
+                    Range("I" & output_ticker_symbols).Value = tickername
+                    close_price = ActiveWorkbook.Worksheets(s).Cells(i, 6).Value
+                    yearly_change = close_price - open_price
+                    Range("J" & output_ticker_symbols).Value = yearly_change
+                    volume = volume + ActiveWorkbook.Worksheets(s).Cells(i, 7).Value
+                    Range("L" & output_ticker_symbols).Value = volume
+            
+                    If (open_price = 0) Then
+                        percent_change = 0
+                    Else
+                        percent_change = yearly_change / open_price
+                    End If
+            
+                    Range("K" & output_ticker_symbols).Value = percent_change
+                    Range("K" & output_ticker_symbols).NumberFormat = "0.00%"
+            
+                    output_ticker_symbols = output_ticker_symbols + 1
+                    volume = 0
+                    open_price = ActiveWorkbook.Worksheets(s).Cells(i + 1, 3)
+            Else
+                    volume = volume + ActiveWorkbook.Worksheets(s).Cells(i, 7).Value
+            End If
+        
+        Next i
+
+        lastrow_summary = ActiveWorkbook.Worksheets(s).Cells(Rows.Count, 9).End(xlUp).Row
+        'Conditional formatting
+        For i = 2 To lastrow_summary
+            If ActiveWorkbook.Worksheets(s).Cells(i, 10).Value > 0 Then
+                ActiveWorkbook.Worksheets(s).Cells(i, 10).Interior.ColorIndex = 4
+            Else
+                ActiveWorkbook.Worksheets(s).Cells(i, 10).Interior.ColorIndex = 3
+            End If
+        Next i
+        
+        'Output summary values
+        ActiveWorkbook.Worksheets(s).Cells(2, 15).Value = "Greatest % Increase"
+        ActiveWorkbook.Worksheets(s).Cells(3, 15).Value = "Greatest % Decrease"
+        ActiveWorkbook.Worksheets(s).Cells(4, 15).Value = "Greatest Total Volume"
+        ActiveWorkbook.Worksheets(s).Cells(1, 16).Value = "Ticker"
+        ActiveWorkbook.Worksheets(s).Cells(1, 17).Value = "Value"
+        
+        For i = 2 To lastrow_summary
+            'Greatest % increase
+            If ActiveWorkbook.Worksheets(s).Cells(i, 11).Value = Application.WorksheetFunction.Max(Range("K2:K" & lastrow_summary)) Then
+                ActiveWorkbook.Worksheets(s).Cells(2, 16).Value = ActiveWorkbook.Worksheets(s).Cells(i, 9).Value
+                ActiveWorkbook.Worksheets(s).Cells(2, 17).Value = ActiveWorkbook.Worksheets(s).Cells(i, 11).Value
+                ActiveWorkbook.Worksheets(s).Cells(2, 17).NumberFormat = "0.00%"
+
+            'Greatest % decrease
+            ElseIf ActiveWorkbook.Worksheets(s).Cells(i, 11).Value = Application.WorksheetFunction.Min(Range("K2:K" & lastrow_summary)) Then
+                ActiveWorkbook.Worksheets(s).Cells(3, 16).Value = ActiveWorkbook.Worksheets(s).Cells(i, 9).Value
+                ActiveWorkbook.Worksheets(s).Cells(3, 17).Value = ActiveWorkbook.Worksheets(s).Cells(i, 11).Value
+                ActiveWorkbook.Worksheets(s).Cells(3, 17).NumberFormat = "0.00%"
+            
+            'Greatest total volume of trade
+            ElseIf ActiveWorkbook.Worksheets(s).Cells(i, 12).Value = Application.WorksheetFunction.Max(Range("L2:L" & lastrow_summary)) Then
+                ActiveWorkbook.Worksheets(s).Cells(4, 16).Value = ActiveWorkbook.Worksheets(s).Cells(i, 9).Value
+                ActiveWorkbook.Worksheets(s).Cells(4, 17).Value = ActiveWorkbook.Worksheets(s).Cells(i, 12).Value
+            End If
+            
+        Next i
+        
+    Next s
+    
+End Sub
